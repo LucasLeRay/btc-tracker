@@ -1,0 +1,45 @@
+service: btc-tracker
+
+frameworkVersion: '2'
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+  binance_key: ${ssm:binance_key}
+  binance_secret: ${ssm:binance_secret}
+  twitter_consumer_key: ${ssm:twitter_consumer_key}
+  twitter_consumer_secret: ${ssm:twitter_consumer_secret}
+  twitter_access_token: ${ssm:twitter_access_token}
+  twitter_access_token_secret: ${ssm:twitter_access_token_secret}
+  phone_number: ${ssm:phone_number}
+
+provider:
+  name: aws
+  runtime: python3.8
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "comprehend:DetectSentiment"
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "SNS:Publish"
+      Resource: "*"
+
+functions:
+  btcTracker:
+    handler: handler.btcTracker
+    timeout: 60
+    events:
+      - schedule: cron(30 9 ? * * *)
+    environment:
+      BINANCE_KEY: ${self:custom.binance_key}
+      BINANCE_SECRET: ${self:custom.binance_secret}
+      TWITTER_CONSUMER_KEY: ${self:custom.twitter_consumer_key}
+      TWITTER_CONSUMER_SECRET: ${self:custom.twitter_consumer_secret}
+      TWITTER_ACCESS_TOKEN: ${self:custom.twitter_access_token}
+      TWITTER_ACCESS_TOKEN_SECRET: ${self:custom.twitter_access_token_secret}
+      PHONE_NUMBER: ${self:custom.phone_number}
+
+plugins:
+  - serverless-python-requirements
